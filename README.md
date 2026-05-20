@@ -21,13 +21,23 @@ parse_intent → retrieve (RAG) → compose_outfit → validate → respond
 
 | Layer | Choice | Why |
 |---|---|---|
-| LLM | Google Gemini 2.0 Flash | Generous free tier, fast, native JSON output |
-| Embeddings | Gemini `text-embedding-004` (768-dim) | Same provider = single key, free |
-| Vector DB | ChromaDB (local) | Zero infra; pre-filters on metadata before ANN search |
+| LLM | Google Gemini Flash | Generous free tier, fast, native structured-output JSON |
+| Embeddings | Gemini `gemini-embedding-001` @ 768 dims (Matryoshka) | Same provider = single key; shrunk dims for cheap storage |
+| Vector DB | ChromaDB (local persistent) | Zero infra; pre-filters on metadata before ANN |
 | Agent | LangGraph | Explicit state machine; every step is debuggable |
-| Scraping | Playwright | Real browser bypasses basic anti-bot |
+| Scraping | Playwright + structured JSON-LD / `__NEXT_DATA__` | Real browser bypasses anti-bot; structured data > CSS selectors |
 | API | FastAPI + Uvicorn | Async, auto OpenAPI docs at `/docs` |
 | Package mgr | uv | Reproducible installs in seconds |
+
+## Data sources
+
+Scraped (catalog totals: **170 items** = 68 tops + 102 bottoms):
+- **Uniqlo India** — `/in/en/men/tops`, `/in/en/men/bottoms`
+- **Bewakoof** — `/men-t-shirts`, `/men-joggers`, `/men-shorts`
+
+Original spec named H&M as an example. H&M's Akamai Bot Manager returns
+HTTP 403 to every headless Chrome request on both India and US storefronts;
+the pivot to Uniqlo + Bewakoof is documented in [ARCHITECTURE.md](./ARCHITECTURE.md#32-scraping-pivot-hm--uniqlo--bewakoof).
 
 ## Setup
 
@@ -74,7 +84,7 @@ quickee/
 ├── src/quickee/
 │   ├── config.py       # pydantic-settings env loader
 │   ├── models.py       # canonical Item + API contracts
-│   ├── scraper/        # H&M + Uniqlo Playwright scrapers
+│   ├── scraper/        # Uniqlo + Bewakoof Playwright scrapers
 │   ├── rag/            # embeddings + ChromaDB ingest + retriever
 │   ├── agent/          # LangGraph state, nodes, prompts
 │   ├── cache/          # semantic prompt cache
@@ -87,4 +97,5 @@ quickee/
 ```
 
 ## Docs
-- [ARCHITECTURE.md](./ARCHITECTURE.md) — design choices, schema, prompt strategies
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — design choices, schema, prompt strategies, Mermaid flowchart
+- [DEMO.md](./DEMO.md) — step-by-step script for the screen recording

@@ -17,14 +17,18 @@ class Category(str, Enum):
 
 
 class Subcategory(str, Enum):
+    # Tops
     TSHIRT = "tshirt"
     SHIRT = "shirt"
     POLO = "polo"
     SWEATER = "sweater"
+    HOODIE = "hoodie"
+    # Bottoms
     PANTS = "pants"
     SHORTS = "shorts"
     JEANS = "jeans"
     CHINOS = "chinos"
+    JOGGER = "jogger"
 
 
 class Item(BaseModel):
@@ -34,7 +38,7 @@ class Item(BaseModel):
     id: str = Field(..., description="Stable unique id: <brand>_<store_sku>")
     brand: str
     name: str
-    description: str
+    description: str = Field(default="", description="May be empty after Chroma round-trip if too long for metadata")
     price_inr: float = Field(..., ge=0)
     image_url: str
     product_url: str
@@ -44,11 +48,16 @@ class Item(BaseModel):
     material: str | None = None
 
     def to_chroma_metadata(self) -> dict:
-        """Flat dict for ChromaDB metadata storage (no nested types)."""
+        """Flat dict for ChromaDB metadata storage (no nested types).
+
+        We truncate description to 4000 chars to stay well under Chroma's
+        per-field metadata limit (16KB) while preserving most of the prose.
+        """
         return {
             "id": self.id,
             "brand": self.brand,
             "name": self.name,
+            "description": (self.description or "")[:4000],
             "price_inr": float(self.price_inr),
             "image_url": self.image_url,
             "product_url": self.product_url,

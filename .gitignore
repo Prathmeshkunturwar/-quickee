@@ -35,12 +35,13 @@ test-results/
 screenshots/
 .playwright-browsers/
 
-# OS / editor
+# OS / editor / Claude Code working dir
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 *.swp
+.claude/
 
 # The assignment PDF is private — do not commit
 *.pdf
