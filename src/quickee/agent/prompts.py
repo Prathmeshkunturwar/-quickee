@@ -26,6 +26,15 @@ Rules:
     "Suggest an entire outfit for me"    -> slots_to_recommend = ["top", "bottom"]
 - color_hints are OPTIONAL — only set when there's a clear pairing implication
   (e.g. with navy chinos, you might hint top color "white" or "off-white").
+- subcategory_hints are OPTIONAL — set ONLY when the user names a specific garment.
+  Allowed top values: tshirt, shirt, polo, sweater, hoodie.
+  Allowed bottom values: pants, shorts, jeans, chinos, jogger.
+  Examples:
+    "formal shirt and trousers"  -> {"top":"shirt", "bottom":"pants"}
+    "office shirt and pants"     -> {"top":"shirt", "bottom":"pants"}
+    "polo and chinos"            -> {"top":"polo",  "bottom":"chinos"}
+    "comfortable joggers and tee" -> {"top":"tshirt","bottom":"jogger"}
+  Do NOT set if the user only says generic words like "top", "bottom", or "outfit".
 - Keep occasion to a single concise phrase.
 - Use lowercase canonical color names: white, black, navy, blue, gray, red, green,
   pink, orange, purple, brown, beige, olive, khaki, yellow.

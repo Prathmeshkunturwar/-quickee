@@ -130,20 +130,36 @@ def retrieve_slots_node(state: GraphState) -> dict[str, Any]:
     if budget is not None and len(intent.slots_to_recommend) > 0:
         per_slot_ceiling = float(budget) * 0.85  # loose; final budget check is in validate
 
+    from quickee.models import Subcategory
+
     for slot in intent.slots_to_recommend:
         cat = Category.TOP if slot == "top" else Category.BOTTOM
         color = intent.color_hints.get(slot)
+        sub_str = intent.subcategory_hints.get(slot)
+        sub: Subcategory | None = None
+        if sub_str:
+            try:
+                sub = Subcategory(sub_str)
+            except ValueError:
+                log.warning("agent.retrieve.bad_subcategory_hint", slot=slot, value=sub_str)
         q = _build_slot_query(slot, intent)
         hits = retriever.retrieve(
             q,
             category=cat,
+            subcategory=sub,
             color=color,
             max_price_inr=per_slot_ceiling,
             k=5,
         )
-        # Fallback: if a color hint filter is too restrictive and yields <2 results, retry without color
+        # Graceful relaxation: drop the most restrictive filter first (color),
+        # then subcategory, before giving up.
         if color and len(hits) < 2:
             log.info("agent.retrieve.relax_color", slot=slot, color=color)
+            hits = retriever.retrieve(
+                q, category=cat, subcategory=sub, max_price_inr=per_slot_ceiling, k=5,
+            )
+        if sub and len(hits) < 2:
+            log.info("agent.retrieve.relax_subcategory", slot=slot, sub=sub_str)
             hits = retriever.retrieve(q, category=cat, max_price_inr=per_slot_ceiling, k=5)
         candidates[slot] = hits
         log.info("agent.retrieve.slot", slot=slot, q=q, n=len(hits),

@@ -31,10 +31,15 @@ log = structlog.get_logger()
 
 BASE = "https://www.uniqlo.com"
 
-# (PLP URL, broad Category)  — subcategory is inferred per item from name
+# (PLP URL, broad Category)  — subcategory is inferred per item from name.
+# Multiple URLs per category are fine: dedup-by-id at merge time removes
+# any product that appears in more than one PLP (e.g. a polo shirt that
+# lives in both /men/tops and /men/shirts-and-polo-shirts).
 CATEGORIES: list[tuple[str, Category]] = [
     ("https://www.uniqlo.com/in/en/men/tops", Category.TOP),
+    ("https://www.uniqlo.com/in/en/men/shirts-and-polo-shirts", Category.TOP),  # formal shirts + polos
     ("https://www.uniqlo.com/in/en/men/bottoms", Category.BOTTOM),
+    ("https://www.uniqlo.com/in/en/men/bottoms/trousers", Category.BOTTOM),  # formal trousers
 ]
 
 

@@ -48,6 +48,17 @@ class ParsedIntent(BaseModel):
         default_factory=dict,
         description="Optional per-slot color hint, e.g. {'top': 'white'} when user implies pairing logic",
     )
+    subcategory_hints: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Optional per-slot subcategory hint when the user names a specific garment. "
+            "Allowed top values: tshirt, shirt, polo, sweater, hoodie. "
+            "Allowed bottom values: pants, shorts, jeans, chinos, jogger. "
+            "Examples: 'formal shirt and trousers' -> {'top':'shirt','bottom':'pants'}. "
+            "'I want a polo' -> {'top':'polo'}. "
+            "OMIT when the user only says generic words like 'top' or 'outfit'."
+        ),
+    )
     notes_for_stylist: str = Field(
         default="",
         description="Anything else the LLM thought relevant for the human-readable stylist note later",

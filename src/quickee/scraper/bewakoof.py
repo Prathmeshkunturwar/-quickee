@@ -41,6 +41,7 @@ BASE = "https://www.bewakoof.com"
 # (PLP URL, broad Category)
 CATEGORIES: list[tuple[str, Category]] = [
     ("https://www.bewakoof.com/men-t-shirts", Category.TOP),
+    ("https://www.bewakoof.com/men-shirts", Category.TOP),  # formal+casual shirts
     ("https://www.bewakoof.com/men-joggers", Category.BOTTOM),
     ("https://www.bewakoof.com/men-shorts", Category.BOTTOM),
 ]
