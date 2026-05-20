@@ -2,102 +2,116 @@
 
 Five-minute screen recording showing the system end-to-end. Record with OBS, Windows Game Bar (`Win + G`), or any screen recorder.
 
+> **Two paths**:
+> - **Path A — Streamlit UI (recommended for the recording).** Looks polished, easy to drive.
+> - **Path B — Swagger UI / `curl`.** Lower-level; only useful if you want to demo the raw JSON API.
+
+The two demos call the same FastAPI backend; the Streamlit UI just renders the response prettily.
+
 ## Pre-flight (do BEFORE recording)
 
 ```powershell
-# 1. Make sure data is built
 cd D:\quickee
-uv run python scripts/build_catalog.py   # confirm "OK 68 tops + 102 bottoms"
-uv run python scripts/ingest.py           # confirm "[ok] ingested 170 items"
+uv sync                                       # ensure deps installed
+uv run python scripts/build_catalog.py        # confirm "OK 68 tops + 102 bottoms"
+uv run python scripts/ingest.py               # confirm "[ok] ingested 170 items"
 
-# 2. Clear the demo cache so the first call is a fresh agent run.
-# (Optional — only if you want to demonstrate fresh agent timing.)
+# (optional) clear the semantic-cache collection so the first call is a fresh run
 Remove-Item D:\quickee\chroma_db\*cache* -Recurse -Force -ErrorAction SilentlyContinue
 ```
 
-## Recording
+Open **two PowerShell windows** in `D:\quickee`:
+- **Window A (backend)**: `uv run uvicorn quickee.api.main:app --port 8000`
+- **Window B (frontend)**: `uv run streamlit run streamlit_app.py`
+
+Streamlit opens at http://localhost:8501; FastAPI's Swagger is at http://localhost:8000/docs.
+
+---
+
+## Path A — Streamlit UI demo (recommended, ~4 min)
 
 ### Scene 1 — Project tour (30s)
 
-Open `D:\quickee` in your editor. Tour the tree:
-- `README.md` and `ARCHITECTURE.md` (open both briefly)
-- `src/quickee/` — point out `scraper/`, `rag/`, `agent/`, `cache/`, `api/`
-- `data/processed/catalog.json` — open, scroll to show 170 items with all fields
+Open `D:\quickee` in your editor. Tour the tree quickly:
+- `README.md`, `ARCHITECTURE.md` (highlight the Mermaid flow diagram)
+- `src/quickee/`: `scraper/`, `rag/`, `agent/`, `cache/`, `api/`
+- `data/processed/catalog.json` — scroll to show real items
 
-> *Voice-over*: "Backend that scrapes Uniqlo + Bewakoof, indexes 170 items in ChromaDB with rich metadata, and exposes an agentic LangGraph workflow via FastAPI."
+> *Voice-over*: "Backend that scrapes Uniqlo + Bewakoof, indexes 170 items in ChromaDB with rich metadata, and exposes an agentic LangGraph workflow via FastAPI. Streamlit UI calls that same endpoint."
 
-### Scene 2 — Start the API (15s)
+### Scene 2 — Open the Streamlit UI (15s)
 
-```powershell
-cd D:\quickee
-uv run uvicorn quickee.api.main:app --host 127.0.0.1 --port 8000
+Open http://localhost:8501. Show the layout:
+- Hero + "Style me" button
+- Sidebar with sample prompts, budget toggle, "Show agent trace" toggle
+- "Your brief" textarea
+
+> *Voice-over*: "Same API the interview spec asked for — now with a usable face."
+
+### Scene 3 — First prompt (60s)
+
+Click the first sample prompt button in the sidebar (or type):
+> *I have dark navy chinos. What t-shirt should I wear for a summer yacht party?*
+
+Click **Style me**. While the spinner runs (~15s), **switch to Window A (uvicorn terminal)** so the viewer can see the agent trace lines stream:
+
+```
+agent.parse_intent.done    occasion='summer yacht party' slots=['top'] owned=['navy chinos']
+agent.retrieve.slot        slot=top  n=5
+agent.compose.done         picks=[('top', 'uniqlo_E483924-000')]
+agent.validate             ok=True
+cache.stored
 ```
 
-Wait for `startup.ready` log. Open `http://127.0.0.1:8000/docs` in browser.
+Switch back to Streamlit. The result renders:
+- Cache-miss badge ("Fresh agent run")
+- One item card with image, brand, color, price, product link
+- Stylist Note in a serif quote block
+- Expand the **Agent trace** panel — point at the LangGraph nodes
 
-> *Voice-over*: "Single endpoint, `POST /api/v1/style-me`, with auto-generated OpenAPI docs."
+> *Voice-over*: "Five explicit nodes — parse_intent, retrieve_slots, compose_outfit, validate, respond. Every step trace-logged. That's the agentic workflow."
 
-### Scene 3 — Complex prompt (Swagger UI) (60s)
+### Scene 4 — Multi-slot prompt with budget (45s)
 
-In Swagger UI: click `POST /api/v1/style-me` → "Try it out".
+Click the second sample prompt:
+> *Suggest a full smart-casual outfit for a wedding cocktail evening in Mumbai. I prefer earthy tones.*
 
-**Paste prompt 1**:
-```json
-{
-  "prompt": "I have dark navy chinos. What t-shirt should I wear for a summer yacht party?"
-}
-```
+Toggle **"Set a budget"** ON in the sidebar, enter `4500`. Click **Style me**.
 
-Click Execute. While agent runs, **switch back to the terminal** showing uvicorn logs. Narrate as the trace prints:
-- `parse_intent` — Gemini extracts occasion, owned items, slots
-- `retrieve_slots` — vector search filtered by category=top
-- `compose_outfit` — Gemini picks an item and writes the Stylist Note
-- `validate` — schema + slot coverage passes
-- `respond`
+Show the response: **two** item cards (top + bottom), color-themed, total under ₹4,500, stylist note that references "earthy tones" + fabric + occasion.
 
-Switch back to Swagger; show the JSON response, **highlight the `stylist_note`** and `agent_trace`.
+> *Voice-over*: "Two-slot recommendation. Budget enforced. The agent factored earthy tones into both the retrieval query and the stylist note."
 
-> *Voice-over*: "Every step is logged. The `agent_trace` in the response is the literal sequence of LangGraph nodes — no black-box magic."
+### Scene 5 — Frugal mindset: semantic cache (45s)
 
-### Scene 4 — Multi-slot complex prompt (45s)
+Click **Style me** again on the **same prompt** (no changes). Response returns in **<1s**, badge says **"Cache hit — instant + no LLM tokens"**.
 
-**Prompt 2** (a full outfit with budget):
-```json
-{
-  "prompt": "Suggest a full smart-casual outfit for a wedding cocktail evening in Mumbai. I prefer earthy tones.",
-  "max_budget_inr": 4500
-}
-```
+Now reword the prompt to:
+> *What complete smart-casual look do you suggest for a Mumbai wedding cocktail night? Earthy palette please.*
 
-Show the result: top + bottom recommendation, total under budget, stylist note that references occasion + tones + fabric details.
+Click **Style me**. Still a cache hit, still <1s.
 
-> *Voice-over*: "Two-slot recommendation, color-themed, under budget. The agent factored 'earthy tones' into both the retrieval query and the stylist note."
-
-### Scene 5 — Frugal mindset / semantic cache (45s)
-
-**Prompt 3** — same as Prompt 2 (verbatim):
-
-Show response comes back in **<1 second**, `cache_hit: true`. Terminal log shows `cache.hit` line.
-
-**Prompt 4** — reworded paraphrase of Prompt 2:
-```json
-{
-  "prompt": "What complete smart-casual look do you suggest for a Mumbai wedding cocktail night? Earthy palette please.",
-  "max_budget_inr": 4500
-}
-```
-
-Same response, still `cache_hit: true`, still <1s.
-
-> *Voice-over*: "Semantic cache. Different words, same intent — we recognize cosine similarity above 0.93 and skip the LLM entirely. Zero tokens spent on this request."
+> *Voice-over*: "Semantic cache. The wording changed completely but the intent is the same — cosine similarity above 0.93 catches it. Zero tokens spent on this request."
 
 ### Scene 6 — Wrap (15s)
 
-Switch to the terminal. Show ARCHITECTURE.md Mermaid block (or render at https://mermaid.live).
+Switch to your editor, open `ARCHITECTURE.md`, scroll to the Mermaid diagram.
 
-> *Voice-over*: "Stack: Uniqlo + Bewakoof scrapers via Playwright + structured JSON-LD/Next.js data. 170 items embedded with Gemini gemini-embedding-001 @ 768 dims. LangGraph state machine with explicit parse/retrieve/compose/validate nodes. Semantic cache on the same Chroma instance. Single FastAPI endpoint."
+> *Voice-over*: "Stack: Playwright scrapers reading structured JSON-LD and Next.js data, 170 items embedded with Gemini at 768 dims, ChromaDB pre-filtered ANN, LangGraph state machine with one retry edge, semantic cache, FastAPI."
 
-## Test prompt cheat-sheet
+---
+
+## Path B — Swagger / curl backup demo (~2 min)
+
+Use this only if Streamlit fails on camera, or if you specifically want to demo the raw JSON.
+
+1. Open http://localhost:8000/docs in browser.
+2. Expand `POST /api/v1/style-me` → **Try it out** → paste body → **Execute**.
+3. Repeat for each prompt in the cheat-sheet.
+
+---
+
+## Test-prompt cheat-sheet
 
 ```text
 1. "I have dark navy chinos. What t-shirt should I wear for a summer yacht party?"
@@ -109,6 +123,7 @@ Switch to the terminal. Show ARCHITECTURE.md Mermaid block (or render at https:/
 
 ## If something fails on camera
 
-- **500 error**: `Remove-Item .\chroma_db\` and re-run `scripts/ingest.py`. Most likely cause is stale partial state.
-- **Quota error from Gemini**: free tier is 100 embed RPM. If you spam, you'll get 429. Wait 60s.
-- **Empty response**: re-check that `data/processed/catalog.json` has items (`Get-Content catalog.json | Measure-Object`)
+- **Streamlit shows "Couldn't reach 127.0.0.1:8000"** → the FastAPI window isn't running. Start it in Window A and retry.
+- **500 from API** → catalog might be stale. Stop the server, `Remove-Item .\chroma_db\ -Recurse -Force`, run `scripts/ingest.py`, restart server.
+- **Gemini 429 quota** → free tier is 100 embed-requests/minute. Wait 60s.
+- **Empty response with "no items found"** → broaden the prompt or remove the budget; the cosmos of catalog items couldn't satisfy the brief.

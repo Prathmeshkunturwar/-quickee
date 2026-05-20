@@ -19,6 +19,7 @@ dependencies = [
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
     "python-slugify>=8.0",
+    "streamlit>=1.57.0",
     "structlog>=24.4",
     "tenacity>=9.0",
     "uvicorn[standard]>=0.32",

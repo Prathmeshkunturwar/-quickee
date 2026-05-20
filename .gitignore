@@ -34,6 +34,7 @@ playwright-report/
 test-results/
 screenshots/
 .playwright-browsers/
+.mcp-web-inspector/
 
 # OS / editor / Claude Code working dir
 .DS_Store

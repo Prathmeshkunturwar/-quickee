@@ -73,9 +73,18 @@ uv run python scripts/ingest.py       # → chroma_db/
 
 ### 6. Run the API
 ```bash
-uv run uvicorn quickee.api.main:app --reload
-# open http://localhost:8000/docs
+uv run uvicorn quickee.api.main:app --port 8000
+# open http://localhost:8000/docs   (Swagger)
 ```
+
+### 7. (Optional) Run the Streamlit demo UI
+In a second terminal, with the API still running on port 8000:
+```bash
+uv run streamlit run streamlit_app.py
+# open http://localhost:8501
+```
+The UI calls the FastAPI endpoint, so both the JSON API and the visual demo
+share the same backend. Use this for the screen recording.
 
 ## Folder layout
 
@@ -89,6 +98,7 @@ quickee/
 │   ├── agent/          # LangGraph state, nodes, prompts
 │   ├── cache/          # semantic prompt cache
 │   └── api/            # FastAPI app + /api/v1/style-me route
+├── streamlit_app.py    # visual demo UI; calls the FastAPI endpoint
 ├── scripts/            # CLI entry points (scrape, ingest, smoke tests)
 ├── data/raw/           # raw scraped JSON (gitignored)
 ├── data/processed/     # normalized + enriched catalog (gitignored)
