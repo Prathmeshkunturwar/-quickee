@@ -1,0 +1,37 @@
+[project]
+name = "quickee"
+version = "0.1.0"
+description = "Quickeee Luxury Stylist Concierge — agentic fashion recommender backend"
+readme = "README.md"
+authors = [
+    { name = "prathmeshKunturwar", email = "kunturwarprathmesh@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "chromadb>=0.5",
+    "fastapi>=0.115",
+    "httpx>=0.27",
+    "langchain-core>=0.3",
+    "langchain-google-genai>=2.0",
+    "langgraph>=0.2",
+    "playwright>=1.48",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "python-slugify>=8.0",
+    "structlog>=24.4",
+    "tenacity>=9.0",
+    "uvicorn[standard]>=0.32",
+]
+
+[build-system]
+requires = ["uv_build>=0.10.11,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipython>=8.28",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.7",
+]
